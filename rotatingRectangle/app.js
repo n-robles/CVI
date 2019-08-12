@@ -89,18 +89,12 @@ var boxVertices =
 var gl;
 
 var InitDemo = function () {
-	console.log('This is working');
-
 	var canvas = document.getElementById('canvas');
 	gl = canvas.getContext('webgl2');
 
 	if (!gl) {
-		console.log('WebGL not supported, falling back on experimental-webgl');
-		gl = canvas.getContext('experimental-webgl');
-	}
-
-	if (!gl) {
-		alert('Your browser does not support WebGL');
+		console.log('WebGL2 no soportado');
+		return;
 	}
 
 	gl.clearColor(0.75, 0.85, 0.8, 1.0);
