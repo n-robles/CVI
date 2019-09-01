@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Rotating Cube</title>
+    </head>
+    <body onload="main();">
+        <canvas width = "800" height = "600" id = "glcanvas"></canvas>
+        <!-- Shaders -->
+        <script name="shader" data-src="shaders/vertex.glsl" data-type="vertex" data-version="v1"></script>
+        <script name="shader" data-src="shaders/fragment.glsl" data-type="fragment" data-version="v1"></script>
+
+        <script src="./libs/gl-matrix-min.js"></script>
+        <script src="./libs/glUtils.js"></script>
+        <script src="./libs/signals.js"></script>
+
+        <script src="app.js"></script>
+    </body>
+</html>
