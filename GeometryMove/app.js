@@ -8,7 +8,10 @@ var state = {
         z:4.0,
     },
     objects: [],
-    animate: true
+    animate: true,
+    maxMove:20,
+    step:0,
+    resta:false
 };
 
 glUtils.SL.init({ callback:function() { main(); } });
@@ -42,7 +45,18 @@ function initState() {
     state.pm = mat4.create();
     state.mvp = mat4.create();
     state.objects = [
+        new Cylinder(),
+        new Circle(0.25,0.0),
+        new Circle(0.25,2),
         new Sphere(),
+        new Rectangle(0.5,0.15,"top","rback"),
+        new Rectangle(0.5,0.15,"bot","rback"),
+        new Rectangle(0.5,0.15,"left","rback"),
+        new Rectangle(0.5,0.15,"right","rback"),
+        new Rectangle(2,0.25,"top","rtop"),
+        new Rectangle(2,0.25,"bot","rtop"),
+        new Rectangle(2,0.25,"left","rtop"),
+        new Rectangle(2,0.25,"right","rtop")
     ];
 }
 
@@ -76,9 +90,28 @@ function draw(args) {
         mat4.copy(mvp, pm);
         mat4.multiply(mvp, mvp, vm);
         mat4.multiply(mvp, mvp, obj.state.mm);
-        mat4.rotateX(mvp, mvp, 0.0);
-        mat4.rotateY(mvp, mvp, 0.01);
+        var translation = vec3.create();
+        if (state.step >= state.maxMove && !state.resta){
+            state.resta = true;
+        }
+        else if (state.step <= 0 && state.resta){
+            state.resta = false
+        }
+        if (state.resta){
+            state.step -= 0.001;
+        }
+        else{
+            state.step += 0.001;
+        }
+        if (obj.objType === "Rectangle" && obj.type==="rtop"){
+            vec3.set (translation, 0, 0, -state.step);
+        }
+        else{
+            vec3.set (translation, 0, state.step, 0.0);
+        }
+        mat4.translate (mvp, mvp, translation);
         state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
-        state.gl.drawElements(state.gl.TRIANGLES, n, state.gl.UNSIGNED_BYTE, 0);
+        obj.draw(state.gl);
+        //state.gl.drawElements(state.gl.TRIANGLES, n, state.gl.UNSIGNED_BYTE, 0);
     });
 }

@@ -109,7 +109,7 @@
           if (line.slice(0, x.length) == x) {
             var words = line.split(' ');
             // remove the semicolon
-            var name = words[2].slice(0, words[2].length-2);
+            var name = words[2].slice(0, words[2].length-1);
             xs.push({type:words[1], name:name});
           }
         }
