@@ -28,8 +28,6 @@ function Cylinder() {
 
     // Initialization
     this.init = function(_this) {
-        //_this.topFace = new Circle(0.5,0.0);
-        //_this.botomFace = new Circle(0.5,2);
     var SPHERE_DIV = 12;
     var j, aj, sj, cj;
     var step = 360 / SPHERE_DIV;
@@ -49,17 +47,8 @@ function Cylinder() {
         vertices.push(_this.height); //x
         vertices.push(cj);//y
         vertices.push(sj); //z
-
-        /*vertices.push(sj); //x
-        vertices.push(0.0);//y
-        vertices.push(cj); //z
-
-        vertices.push(sj); //x
-        vertices.push(_this.height);//y
-        vertices.push(cj); //z*/
     }
     _this.attributes.aPosition.bufferData = new Float32Array(vertices);
-    //_this.attributes.aColor.bufferData = new Float32Array(vertices);
     // Indices
     for (j = 0; j < vertices.length/3; j++) {
         indices.push(j);
@@ -83,10 +72,12 @@ function Cylinder() {
     mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
+    this.calculateMatrix = function(mvp){
+        
+    };
+
     this.draw = function(gl){
         state.gl.drawElements(gl.TRIANGLE_STRIP, this.indices.length, gl.UNSIGNED_BYTE, 0);
-        //this.topFace.draw(gl);
-        //this.botomFace.draw(gl);
     }
 };
 
@@ -126,9 +117,6 @@ function Circle(radius, height){
         vertices.push(_this.height); //x
         vertices.push(0.0);//y
         vertices.push(0.0); //z
-        /*vertices.push(0.0); //x
-        vertices.push(_this.height);//y
-        vertices.push(0.0); //z*/
         for (j = 0; j <= 360; j+=step) {
             aj = j * Math.PI / 180;
             sj = _this.radius * Math.sin(aj);
@@ -137,10 +125,6 @@ function Circle(radius, height){
             vertices.push(_this.height); //x
             vertices.push(cj);//y
             vertices.push(sj); //z
-
-            /*vertices.push(sj); //x
-            vertices.push(_this.height);//y
-            vertices.push(cj); //z*/
         }
         _this.attributes.aPosition.bufferData = new Float32Array(vertices);
         // Indices
@@ -164,6 +148,10 @@ function Circle(radius, height){
         vec3.set (translation, 1, -0.2, 0);
         mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
+
+    this.calculateMatrix = function(mvp){
+        
+    };
 
     this.draw = function(gl){
         state.gl.drawElements(gl.TRIANGLE_FAN, this.indices.length, gl.UNSIGNED_BYTE, 0);

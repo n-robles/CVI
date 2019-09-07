@@ -86,10 +86,9 @@ function draw(args) {
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
         state.program.renderBuffers(obj);
+        
         var n = obj.indices.length;
-        mat4.copy(mvp, pm);
-        mat4.multiply(mvp, mvp, vm);
-        mat4.multiply(mvp, mvp, obj.state.mm);
+        
         var translation = vec3.create();
         if (state.step >= state.maxMove && !state.resta){
             state.resta = true;
@@ -103,15 +102,19 @@ function draw(args) {
         else{
             state.step += 0.001;
         }
-        if (obj.objType === "Rectangle" && obj.type==="rtop"){
-            vec3.set (translation, 0, 0, -state.step);
+        if (obj.objType === "Rectangle" && obj.type==="rback"){
+            vec3.set (translation, 0, state.step, 0.0);
         }
         else{
             vec3.set (translation, 0, state.step, 0.0);
         }
+        
+        mat4.copy(mvp, pm);
+        mat4.multiply(mvp, mvp, vm);
         mat4.translate (mvp, mvp, translation);
+        obj.calculateMatrix(mvp);
+        mat4.multiply(mvp, mvp, obj.state.mm);
         state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
         obj.draw(state.gl);
-        //state.gl.drawElements(state.gl.TRIANGLES, n, state.gl.UNSIGNED_BYTE, 0);
     });
 }

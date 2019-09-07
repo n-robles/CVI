@@ -27,12 +27,6 @@ function Rectangle(lenght, widht, orientation, type) {
 
     // Initialization
     this.init = function(_this) {
-    if (_this.type === "rback"){
-
-    }
-    else if (_this.type === "rtop"){
-
-    }
     var vertices = [], indices = [];
     if (_this.orientation === "top")
     {
@@ -201,29 +195,40 @@ function Rectangle(lenght, widht, orientation, type) {
         selColor.push(_this.selColor[3]);
     }
     _this.attributes.aColor.bufferData = new Float32Array(selColor);    
-    if (_this.type === "rback"){
-        var translation = vec3.create();
-        vec3.set (translation, 2.75, 0, 0.25);
-        mat4.translate (_this.state.mm, _this.state.mm, translation);
-    }
-    else if (_this.type === "rtop"){
-        var rotation = new Float32Array(16);
-        var identityMatrix = new Float32Array(16);
-        mat4.identity(identityMatrix);
-        mat4.rotate(_this.state.mm, identityMatrix, Math.PI/2, [1, 0, 0]);
-        //mat4.mul(_this.state.mm, _this.state.mm, rotation);
-        var translation = vec3.create();
-        vec3.set (translation, 0, 0, -1.65);
-        mat4.translate (_this.state.mm, _this.state.mm, translation);
-    }
+    
     }(this);
-//4 cubos de 4 de ancho y un mini cilindro en el centro
-    this.draw = function(gl){
-        /*var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        var rotation = new Float32Array(16);
+
+    this.calculateMatrix = function(mvp){
+        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
         var identityMatrix = new Float32Array(16);
         mat4.identity(identityMatrix);
-        mat4.rotate(this.state.mm, identityMatrix, angle, [0, 0, 1]);*/
+
+        if (this.type === "rback"){
+            var translationX = vec3.create();
+            var translationZ = vec3.create();
+            
+            mat4.rotate(this.state.mm, identityMatrix, angle, [0, 0, 1]);
+
+            vec3.set (translationX, 2.75, 0, 0);
+            vec3.set (translationZ, 0, 0, 0.25);
+            mat4.translate (mvp, mvp, translationX);
+            mat4.translate (mvp, mvp, translationZ);
+        }
+        else if (this.type === "rtop"){
+            var rotationX = new Float32Array(16);
+            var rotationZ = new Float32Array(16);
+
+            mat4.rotate(rotationZ, identityMatrix, angle, [0, 0, 1]);
+            mat4.rotate(rotationX, identityMatrix, Math.PI/2, [1, 0, 0]);
+            mat4.mul(this.state.mm, rotationX, rotationZ);
+
+            var translation = vec3.create();
+            vec3.set (translation, 0, 0, -1.65);
+            mat4.translate (this.state.mm, this.state.mm, translation);
+        }
+    };
+    
+    this.draw = function(gl){
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_BYTE, 0);
-    }
+    };
 };

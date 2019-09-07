@@ -81,6 +81,10 @@ function Sphere() {
     };*/
     }(this);
 
+    this.calculateMatrix = function(mvp){
+        
+    };
+
     this.draw = function(gl){
         state.gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_BYTE, 0);
     };
