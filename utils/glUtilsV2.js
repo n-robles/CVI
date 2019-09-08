@@ -102,9 +102,9 @@
        */
       xFromSource: function(source, x) {
         var xs = [];
-        var lines = source.split('\n');
+        var lines = source.split('\n');        
         for (var i=0; i<lines.length; i++) {
-          var line = lines[i];
+          var line = lines[i].trim();
           // check that it contains the keyword at the beginning of the line (not a comment)
           if (line.slice(0, x.length) == x) {
             var words = line.split(' ');
@@ -182,9 +182,12 @@
         return xmlhttp;
       },
       sendRequest: function(url,callback,element) {
-        var req = this.createXMLHTTPObject();
+        if (!element) return;
+        var req = element.attributes["data-src"].nodeValue;
+        //var req = this.createXMLHTTPObject();
         if (!req) return;
-        var method = "GET";
+        callback(req,element);
+        /*var method = "GET";
         req.open(method,url,true);
         req.onreadystatechange = function () {
           if (req.readyState != 4) return;
@@ -194,7 +197,7 @@
           callback(req,element);
         }
         if (req.readyState == 4) return;
-        req.send();
+        req.send();*/
       },
       /*
        * Signals
@@ -211,9 +214,9 @@
         this.Shaders = this.Shaders || {};
         this.loadedSignal.add(this.callback);
         this.slShaderCount = this.shaderElems.length;
-        for(var i = 0; i < this.slShaderCount; i++) {
+        for(var i = 0; i < this.shaderElems.length; i++) {
           var shader = this.shaderElems[i];
-          this.sendRequest(shader.getAttribute(this.dataSrc), this.processShader, shader);
+          this.processShader(shader.getAttribute(this.dataSrc), shader);
         }
         this.checkForComplete();
       },
@@ -231,8 +234,8 @@
             fragment: ''
           };
         }
-        glUtils.SL.Shaders[version][element.getAttribute(glUtils.SL.dataType)] = req.responseText;
-        glUtils.SL.checkForComplete();
+        glUtils.SL.Shaders[version][element.getAttribute(glUtils.SL.dataType)] = req;
+        //glUtils.SL.checkForComplete();
       },
     };
   
