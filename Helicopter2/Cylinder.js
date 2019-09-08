@@ -1,5 +1,5 @@
 // Create a cylinder
-function Cylinder() {
+function Cylinder(type = "") {
     this.height = 2;
     this.radius = 0.25;
     this.attributes = {
@@ -16,11 +16,19 @@ function Cylinder() {
     };
     this.indices = null;
     this.objType = "Cylinder";
+    this.role = type;
     this.state = {
         mm: mat4.create(),
         nm: null,
     };
-    this.selColor = [0.4,0.2,0.6,1.0];
+    if (this.role === "focus")
+    {
+        this.selColor = [0.5,0.4,0.3,1.0];
+    }
+    else
+    {
+        this.selColor = [0.4,0.01,0.2,1.0];
+    }
     this.stride = 0;
 
     this.topFace = null;
@@ -28,52 +36,62 @@ function Cylinder() {
 
     // Initialization
     this.init = function(_this) {
-    var SPHERE_DIV = 12;
-    var j, aj, sj, cj;
-    var step = 360 / SPHERE_DIV;
-    aj = step;
+        var SPHERE_DIV = 12;
+        var j, aj, sj, cj;
+        var step = 360 / SPHERE_DIV;
+        aj = step;
 
-    // Vertices
-    var vertices = [], indices = [];
-    for (j = 0; j <= 360; j += step) {
-        aj = j * Math.PI / 180;
-        sj = _this.radius * Math.sin(aj);
-        cj = _this.radius * Math.cos(aj);
+        // Vertices
+        var vertices = [], indices = [];
+        for (j = 0; j <= 360; j += step) {
+            aj = j * Math.PI / 180;
+            sj = _this.radius * Math.sin(aj);
+            cj = _this.radius * Math.cos(aj);
 
-        vertices.push(0.0); //x
-        vertices.push(cj);//y
-        vertices.push(sj); //z
+            vertices.push(0.0); //x
+            vertices.push(cj);//y
+            vertices.push(sj); //z
 
-        vertices.push(_this.height); //x
-        vertices.push(cj);//y
-        vertices.push(sj); //z
-    }
-    _this.attributes.aPosition.bufferData = new Float32Array(vertices);
-    // Indices
-    for (j = 0; j < vertices.length/3; j++) {
-        indices.push(j);
-    }
-    indices.push(1);
-    indices.push(2);
-    _this.indices = new Uint8Array(indices);
+            vertices.push(_this.height); //x
+            vertices.push(cj);//y
+            vertices.push(sj); //z
+        }
+        _this.attributes.aPosition.bufferData = new Float32Array(vertices);
+        // Indices
+        for (j = 0; j < vertices.length/3; j++) {
+            indices.push(j);
+        }
+        indices.push(1);
+        indices.push(2);
+        _this.indices = new Uint8Array(indices);
 
-    // Selection color
-    var selColor = [];
-    for (j = 0; j <= vertices.length/3; j++) {
-        selColor.push(_this.selColor[0]);
-        selColor.push(_this.selColor[1]);
-        selColor.push(_this.selColor[2]);
-        selColor.push(_this.selColor[3]);
-    }
-    _this.attributes.aColor.bufferData = new Float32Array(selColor);
-    
-    var translation = vec3.create();
-    vec3.set (translation, 1, -0.2, 0);
-    mat4.translate (_this.state.mm, _this.state.mm, translation);
+        // Selection color
+        var selColor = [];
+        for (j = 0; j <= vertices.length/3; j++) {
+            selColor.push(_this.selColor[0]);
+            selColor.push(Math.random() * (1 - _this.selColor[1]) + _this.selColor[1]);
+            selColor.push(_this.selColor[2]);
+            selColor.push(_this.selColor[3]);
+        }
+        _this.attributes.aColor.bufferData = new Float32Array(selColor);
+        
+        //var translation = vec3.create();
+        //vec3.set (translation, 1, -0.2, 0);
+        //mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
-    this.calculateMatrix = function(mvp){
-        
+    this.calculateMatrix = function(mvp, speed, radius){
+        if (this.role !== "focus")
+        {
+            var translation = vec3.create();
+            vec3.set (translation, 1, -0.2, 0);
+            mat4.translate (mvp, mvp, translation);
+
+            var angle = performance.now() / speed / 6 * 2 * Math.PI;
+            var translation = vec3.create();
+            vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
+            mat4.translate (mvp, mvp, translation);
+        }
     };
 
     this.draw = function(gl){
@@ -102,6 +120,7 @@ function Circle(radius, height){
         mm: mat4.create(),
         nm: null,
     };
+    
     this.selColor = [0.4,0.6,0.6,1.0];
     this.stride = 0;
 
@@ -139,18 +158,25 @@ function Circle(radius, height){
         for (j = 0; j <= circleSegment; j++) {
             selColor.push(_this.selColor[0]);
             selColor.push(_this.selColor[1]);
-            selColor.push(_this.selColor[2]);
+            selColor.push(Math.random() * (1 - _this.selColor[2]) + _this.selColor[2]);
             selColor.push(_this.selColor[3]);
         }
         _this.attributes.aColor.bufferData = new Float32Array(selColor);
 
-        var translation = vec3.create();
-        vec3.set (translation, 1, -0.2, 0);
-        mat4.translate (_this.state.mm, _this.state.mm, translation);
+        //var translation = vec3.create();
+        //vec3.set (translation, 1, -0.2, 0);
+        //mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
     this.calculateMatrix = function(mvp){
-        
+        var translation = vec3.create();
+        vec3.set (translation, 1, -0.2, 0);
+        mat4.translate (mvp, mvp, translation);
+
+        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+        var translation = vec3.create();
+        vec3.set (translation, Math.cos(angle)*5, 0, Math.sin(angle)*5);
+        mat4.translate (mvp, mvp, translation);
     };
 
     this.draw = function(gl){

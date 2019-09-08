@@ -17,7 +17,7 @@ function Sphere() {
         mm: mat4.create(),
         nm: null,
     };
-    this.selColor = [0.3,0.2,0.6,1.0];
+    this.selColor = [0.3,0.05,0.2,1.0];
     this.stride = 0;
     this.objType = "Sphere";
 
@@ -68,7 +68,7 @@ function Sphere() {
     for (j = 0; j <= sphereSegments; j++) {
         for (i = 0; i <= sphereSegments; i++) {
             selColor.push(_this.selColor[0]);
-            selColor.push(_this.selColor[1]);
+            selColor.push(Math.random() * (1 - _this.selColor[1]) + _this.selColor[1]);
             selColor.push(_this.selColor[2]);
             selColor.push(_this.selColor[3]);
         }
@@ -81,8 +81,11 @@ function Sphere() {
     };*/
     }(this);
 
-    this.calculateMatrix = function(mvp){
-        
+    this.calculateMatrix = function(mvp, speed, radius){
+        var angle = performance.now() / speed / 6 * 2 * Math.PI;
+        var translation = vec3.create();
+        vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
+        mat4.translate (mvp, mvp, translation);
     };
 
     this.draw = function(gl){

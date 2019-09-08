@@ -5,13 +5,12 @@ var state = {
     eye: {
         x:3.0,
         y:3.0,
-        z:4.0,
+        z:7.0,
     },
     objects: [],
     animate: true,
-    maxMove:20,
-    step:0,
-    resta:false
+    speed:1000,
+    radius:10
 };
 
 glUtils.SL.init({ callback:function() { main(); } });
@@ -45,7 +44,7 @@ function initState() {
     state.pm = mat4.create();
     state.mvp = mat4.create();
     state.objects = [
-        new Cylinder(),
+        new Cylinder("tail"),
         new Circle(0.25,0.0),
         new Circle(0.25,2),
         new Sphere(),
@@ -56,7 +55,8 @@ function initState() {
         new Rectangle(2,0.25,"top","rtop"),
         new Rectangle(2,0.25,"bot","rtop"),
         new Rectangle(2,0.25,"left","rtop"),
-        new Rectangle(2,0.25,"right","rtop")
+        new Rectangle(2,0.25,"right","rtop"),
+        new Cylinder("focus")
     ];
 }
 
@@ -74,8 +74,9 @@ function draw(args) {
     var vm = state.vm;
     var pm = state.pm;
     var mvp = state.mvp;
+    var fov = 120 * Math.PI/180
     mat4.perspective(pm,
-        20, state.canvas.width/state.canvas.height, 1, 100
+        fov, state.canvas.width/state.canvas.height, 1, 100
     );
     mat4.lookAt(vm,
         vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
@@ -86,33 +87,18 @@ function draw(args) {
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
         state.program.renderBuffers(obj);
-        
         var n = obj.indices.length;
-        
         var translation = vec3.create();
-        if (state.step >= state.maxMove && !state.resta){
-            state.resta = true;
-        }
-        else if (state.step <= 0 && state.resta){
-            state.resta = false
-        }
-        if (state.resta){
-            state.step -= 0.001;
-        }
-        else{
-            state.step += 0.001;
-        }
-        if (obj.objType === "Rectangle" && obj.type==="rback"){
-            vec3.set (translation, 0, state.step, 0.0);
-        }
-        else{
-            vec3.set (translation, 0, state.step, 0.0);
-        }
         
         mat4.copy(mvp, pm);
         mat4.multiply(mvp, mvp, vm);
-        mat4.translate (mvp, mvp, translation);
-        obj.calculateMatrix(mvp);
+        obj.calculateMatrix(mvp, state,speed, state.radius);
+        vec3.set (translation, 2, 0.0, 0.0);
+        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+        var identityMatrix = new Float32Array(16);
+        mat4.identity(identityMatrix);
+        var rotationY = new Float32Array(16);
+        
         mat4.multiply(mvp, mvp, obj.state.mm);
         state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
         obj.draw(state.gl);

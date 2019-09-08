@@ -22,7 +22,7 @@ function Rectangle(lenght, widht, orientation, type) {
         nm: null,
     };
     this.objType = "Rectangle";
-    this.selColor = [0.05,0.15,0.15,1.0];
+    this.selColor = [0.1,0.15,0.05,1.0];
     this.stride = 0;
 
     // Initialization
@@ -191,14 +191,14 @@ function Rectangle(lenght, widht, orientation, type) {
     for (j = 0; j <= indices.length; j++) {
         selColor.push(_this.selColor[0]);
         selColor.push(_this.selColor[1]);
-        selColor.push(_this.selColor[2]);
+        selColor.push(Math.random() * (1 - _this.selColor[2]) + _this.selColor[2]);
         selColor.push(_this.selColor[3]);
     }
     _this.attributes.aColor.bufferData = new Float32Array(selColor);    
     
     }(this);
 
-    this.calculateMatrix = function(mvp){
+    this.calculateMatrix = function(mvp, speed, radius){
         var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
         var identityMatrix = new Float32Array(16);
         mat4.identity(identityMatrix);
@@ -226,6 +226,10 @@ function Rectangle(lenght, widht, orientation, type) {
             vec3.set (translation, 0, 0, -1.65);
             mat4.translate (this.state.mm, this.state.mm, translation);
         }
+        var orbit = performance.now() / speed / 6 * 2 * Math.PI;
+        var translation = vec3.create();
+        vec3.set (translation, Math.cos(orbit)*radius, 0, Math.sin(orbit)*radius);
+        mat4.translate (mvp, mvp, translation);
     };
     
     this.draw = function(gl){
