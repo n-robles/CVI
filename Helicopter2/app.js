@@ -10,13 +10,32 @@ var state = {
     objects: [],
     animate: true,
     speed:1000,
-    radius:10
+    radius:5
 };
+
+var sliderSpeed = document.getElementById('speed');
+var sliderDistance = document.getElementById('distance');
+
+sliderSpeed.onchange = function() 
+{
+  state.speed = 10000/Number(sliderSpeed.value);
+  animate();
+}
+
+sliderDistance.onchange = function() 
+{
+  state.radius = Number(sliderDistance.value);
+  animate();
+}
 
 glUtils.SL.init({ callback:function() { main(); } });
 
 function main() {
     state.canvas = document.getElementById("glcanvas");
+
+    state.speed = 10000/Number(sliderSpeed.value);
+    state.radius = Number(sliderDistance.value);
+
     state.gl = glUtils.checkWebGL(state.canvas, { preserveDrawingBuffer: true });
     initShaders();
     initGL();
@@ -92,7 +111,7 @@ function draw(args) {
         
         mat4.copy(mvp, pm);
         mat4.multiply(mvp, mvp, vm);
-        obj.calculateMatrix(mvp, state,speed, state.radius);
+        obj.calculateMatrix(mvp, state.speed, state.radius);
         vec3.set (translation, 2, 0.0, 0.0);
         var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
         var identityMatrix = new Float32Array(16);

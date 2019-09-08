@@ -168,14 +168,14 @@ function Circle(radius, height){
         //mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
-    this.calculateMatrix = function(mvp){
+    this.calculateMatrix = function(mvp, speed, radius){
         var translation = vec3.create();
         vec3.set (translation, 1, -0.2, 0);
         mat4.translate (mvp, mvp, translation);
 
-        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+        var angle = performance.now() / speed / 6 * 2 * Math.PI;
         var translation = vec3.create();
-        vec3.set (translation, Math.cos(angle)*5, 0, Math.sin(angle)*5);
+        vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
         mat4.translate (mvp, mvp, translation);
     };
 
