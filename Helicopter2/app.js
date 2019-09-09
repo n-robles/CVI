@@ -59,9 +59,9 @@ function initGL() {
 }
 
 function initState() {
-    state.vm = mat4.create();
-    state.pm = mat4.create();
-    state.mvp = mat4.create();
+    state.vm = glMatrix.mat4.create();
+    state.pm = glMatrix.mat4.create();
+    state.mvp = glMatrix.mat4.create();
     state.objects = [
         new Cylinder("tail"),
         new Circle(0.25,0.0),
@@ -94,31 +94,25 @@ function draw(args) {
     var pm = state.pm;
     var mvp = state.mvp;
     var fov = 120 * Math.PI/180
-    mat4.perspective(pm,
+    glMatrix.mat4.perspective(pm,
         fov, state.canvas.width/state.canvas.height, 1, 100
     );
-    mat4.lookAt(vm,
-        vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
-        vec3.fromValues(0,0,0),
-        vec3.fromValues(0,1,0)
+    glMatrix.mat4.lookAt(vm,
+        glMatrix.vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
+        glMatrix.vec3.fromValues(0,0,0),
+        glMatrix.vec3.fromValues(0,1,0)
     );
 
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
         state.program.renderBuffers(obj);
-        var n = obj.indices.length;
-        var translation = vec3.create();
         
-        mat4.copy(mvp, pm);
-        mat4.multiply(mvp, mvp, vm);
+        glMatrix.mat4.copy(mvp, pm);
+        glMatrix.mat4.multiply(mvp, mvp, vm);
         obj.calculateMatrix(mvp, state.speed, state.radius);
-        vec3.set (translation, 2, 0.0, 0.0);
-        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        var identityMatrix = new Float32Array(16);
-        mat4.identity(identityMatrix);
-        var rotationY = new Float32Array(16);
         
-        mat4.multiply(mvp, mvp, obj.state.mm);
+        glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
+
         state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
         obj.draw(state.gl);
     });

@@ -18,16 +18,16 @@ function Cylinder(type = "") {
     this.objType = "Cylinder";
     this.role = type;
     this.state = {
-        mm: mat4.create(),
+        mm: glMatrix.mat4.create(),
         nm: null,
     };
     if (this.role === "focus")
     {
-        this.selColor = [0.5,0.4,0.3,1.0];
+        this.selColor = [0.8,0.3,0.4,1.0];
     }
     else
     {
-        this.selColor = [0.4,0.01,0.2,1.0];
+        this.selColor = [0.1,0.01,0.1,1.0];
     }
     this.stride = 0;
 
@@ -43,19 +43,38 @@ function Cylinder(type = "") {
 
         // Vertices
         var vertices = [], indices = [];
-        for (j = 0; j <= 360; j += step) {
-            aj = j * Math.PI / 180;
-            sj = _this.radius * Math.sin(aj);
-            cj = _this.radius * Math.cos(aj);
-
-            vertices.push(0.0); //x
-            vertices.push(cj);//y
-            vertices.push(sj); //z
-
-            vertices.push(_this.height); //x
-            vertices.push(cj);//y
-            vertices.push(sj); //z
+        if(_this.role === "focus"){
+            for (j = 0; j <= 360; j += step) {
+                aj = j * Math.PI / 180;
+                sj = _this.radius * Math.sin(aj);
+                cj = _this.radius * Math.cos(aj);
+    
+                vertices.push(0.0); //x
+                vertices.push(cj);//y
+                vertices.push(sj); //z
+    
+                vertices.push(_this.height); //x
+                vertices.push(cj);//y
+                vertices.push(sj); //z
+            }
         }
+        else{
+            for (j = 0; j <= 360; j += step) {
+                aj = j * Math.PI / 180;
+                sj = _this.radius * Math.sin(aj);
+                cj = _this.radius * Math.cos(aj);
+    
+                vertices.push(cj); //x
+                vertices.push(sj);//y
+                vertices.push(0.0); //z
+    
+                vertices.push(cj); //x
+                vertices.push(sj);//y
+                vertices.push(_this.height); //z
+            }
+        }
+        
+        
         _this.attributes.aPosition.bufferData = new Float32Array(vertices);
         // Indices
         for (j = 0; j < vertices.length/3; j++) {
@@ -74,23 +93,24 @@ function Cylinder(type = "") {
             selColor.push(_this.selColor[3]);
         }
         _this.attributes.aColor.bufferData = new Float32Array(selColor);
-        
-        //var translation = vec3.create();
-        //vec3.set (translation, 1, -0.2, 0);
-        //mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
     this.calculateMatrix = function(mvp, speed, radius){
         if (this.role !== "focus")
         {
-            var translation = vec3.create();
-            vec3.set (translation, 1, -0.2, 0);
-            mat4.translate (mvp, mvp, translation);
-
+            var lookAt = glMatrix.mat4.create();
             var angle = performance.now() / speed / 6 * 2 * Math.PI;
-            var translation = vec3.create();
-            vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
-            mat4.translate (mvp, mvp, translation);
+
+            var translation = glMatrix.vec3.create();
+            glMatrix.vec3.set (translation, 0, -0.2, 1);
+            glMatrix.mat4.translate (mvp, mvp, translation);
+
+            glMatrix.mat4.targetTo(lookAt,
+                glMatrix.vec3.fromValues(Math.cos(angle)*radius,0.2,Math.sin(angle)*radius),
+                glMatrix.vec3.fromValues(1,0,0),
+                glMatrix.vec3.fromValues(0,1,0)
+            );
+            glMatrix.mat4.mul(mvp,mvp,lookAt);
         }
     };
 
@@ -115,13 +135,14 @@ function Circle(radius, height){
         }
     };
     this.objType = "Circle";
+    this.role = "body";
     this.indices = null;
     this.state = {
-        mm: mat4.create(),
+        mm: glMatrix.mat4.create(),
         nm: null,
     };
     
-    this.selColor = [0.4,0.6,0.6,1.0];
+    this.selColor = [0.2,0.3,0.6,1.0];
     this.stride = 0;
 
     // Initialization
@@ -133,17 +154,17 @@ function Circle(radius, height){
 
         // Vertices
         var vertices = [], indices = [];
-        vertices.push(_this.height); //x
+        vertices.push(0.0); //x
         vertices.push(0.0);//y
-        vertices.push(0.0); //z
+        vertices.push(_this.height); //z
         for (j = 0; j <= 360; j+=step) {
             aj = j * Math.PI / 180;
             sj = _this.radius * Math.sin(aj);
             cj = _this.radius * Math.cos(aj);
 
-            vertices.push(_this.height); //x
-            vertices.push(cj);//y
-            vertices.push(sj); //z
+            vertices.push(cj); //x
+            vertices.push(sj);//y
+            vertices.push(_this.height); //z
         }
         _this.attributes.aPosition.bufferData = new Float32Array(vertices);
         // Indices
@@ -162,21 +183,22 @@ function Circle(radius, height){
             selColor.push(_this.selColor[3]);
         }
         _this.attributes.aColor.bufferData = new Float32Array(selColor);
-
-        //var translation = vec3.create();
-        //vec3.set (translation, 1, -0.2, 0);
-        //mat4.translate (_this.state.mm, _this.state.mm, translation);
     }(this);
 
     this.calculateMatrix = function(mvp, speed, radius){
-        var translation = vec3.create();
-        vec3.set (translation, 1, -0.2, 0);
-        mat4.translate (mvp, mvp, translation);
+        var translation = glMatrix.vec3.create();
+        glMatrix.vec3.set (translation, 0, -0.2, 1);
+        glMatrix.mat4.translate (mvp, mvp, translation);
 
         var angle = performance.now() / speed / 6 * 2 * Math.PI;
-        var translation = vec3.create();
-        vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
-        mat4.translate (mvp, mvp, translation);
+
+        var lookAt = glMatrix.mat4.create();
+        glMatrix.mat4.targetTo(lookAt,
+            glMatrix.vec3.fromValues(Math.cos(angle)*radius,0.2,Math.sin(angle)*radius),
+            glMatrix.vec3.fromValues(1,0,0),
+            glMatrix.vec3.fromValues(0,1,0)
+        );
+        glMatrix.mat4.mul(mvp,mvp,lookAt);
     };
 
     this.draw = function(gl){

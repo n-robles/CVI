@@ -14,12 +14,13 @@ function Sphere() {
     };
     this.indices = null;
     this.state = {
-        mm: mat4.create(),
+        mm: glMatrix.mat4.create(),
         nm: null,
     };
-    this.selColor = [0.3,0.05,0.2,1.0];
+    this.selColor = [0.1,0.05,0.2,1.0];
     this.stride = 0;
     this.objType = "Sphere";
+    this.role = "body";
 
     // Initialization
     this.init = function(_this) {
@@ -74,18 +75,18 @@ function Sphere() {
         }
     }
     _this.attributes.aColor.bufferData = new Float32Array(selColor);
-    /*_this.attributes.aSelColor = {
-        size:4,
-        offset:0,
-        bufferData: new Float32Array(selColor),
-    };*/
     }(this);
 
     this.calculateMatrix = function(mvp, speed, radius){
         var angle = performance.now() / speed / 6 * 2 * Math.PI;
-        var translation = vec3.create();
-        vec3.set (translation, Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
-        mat4.translate (mvp, mvp, translation);
+
+        var lookAt = glMatrix.mat4.create();
+        glMatrix.mat4.targetTo(lookAt,
+            glMatrix.vec3.fromValues(Math.cos(angle)*radius,0,Math.sin(angle)*radius),
+            glMatrix.vec3.fromValues(1,0,0),
+            glMatrix.vec3.fromValues(0,1,0)
+        );
+        glMatrix.mat4.mul(mvp,mvp,lookAt);
     };
 
     this.draw = function(gl){
