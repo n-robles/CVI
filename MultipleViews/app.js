@@ -3,9 +3,9 @@ var state = {
     gl: null,
     animation: {},
     eye: {
-        x:3.0,
-        y:3.0,
-        z:7.0,
+        x:12.0,
+        y:4.0,
+        z:12.0,
     },
     objects: [],
     animate: true,
@@ -103,7 +103,7 @@ function draw(args) {
     );
     glMatrix.mat4.lookAt(vm,
         glMatrix.vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
-        glMatrix.vec3.fromValues(0,0,0),
+        glMatrix.vec3.fromValues(1,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
 
@@ -112,27 +112,28 @@ function draw(args) {
     state.gl.viewport(halfWidth,halfHeight,halfWidth,halfHeight);
     fov = 120 * Math.PI/180
     glMatrix.mat4.perspective(pm,
-        fov, halfWidth/height, 1, 100
+        fov, halfWidth/halfHeight, 1, 100
     );
     glMatrix.mat4.lookAt(vm,
-        glMatrix.vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
-        glMatrix.vec3.fromValues(0,0,0),
+        glMatrix.vec3.fromValues(1,7,1),
+        glMatrix.vec3.fromValues(1,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
 
-
+    drawScene(vm, pm);
 
 
     state.gl.viewport(halfWidth,0,halfWidth,halfHeight);
     fov = 120 * Math.PI/180
     glMatrix.mat4.perspective(pm,
-        fov, halfWidth/height, 1, 100
+        fov, halfWidth/halfHeight, 1, 100
     );
     glMatrix.mat4.lookAt(vm,
-        glMatrix.vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
-        glMatrix.vec3.fromValues(0,0,0),
+        glMatrix.vec3.fromValues(1,2,12),
+        glMatrix.vec3.fromValues(1,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
+    drawScene(vm, pm);
     //// Loop through each object and draw!
     //state.objects.forEach(function(obj) {
     //    state.program.renderBuffers(obj);
