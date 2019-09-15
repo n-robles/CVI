@@ -4,7 +4,7 @@ var state = {
     animation: {},
     eye: {
         x:12.0,
-        y:4.0,
+        y:15.0,
         z:12.0,
     },
     objects: [],
@@ -92,10 +92,8 @@ function draw(args) {
     const halfWidth = width/2;
     const halfHeight = height/2;
     state.gl.clear(state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT);
-    //var uMVPMatrix = state.gl.getUniformLocation(state.program, 'uMVPMatrix');
     var vm = state.vm;
     var pm = state.pm;
-    //var mvp = state.mvp;
     state.gl.viewport(0,0,halfWidth,height);
     var fov = 120 * Math.PI/180
     glMatrix.mat4.perspective(pm,
@@ -115,41 +113,28 @@ function draw(args) {
         fov, halfWidth/halfHeight, 1, 100
     );
     glMatrix.mat4.lookAt(vm,
-        glMatrix.vec3.fromValues(1,7,1),
+        glMatrix.vec3.fromValues(1,8,1),
         glMatrix.vec3.fromValues(1,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
 
     drawScene(vm, pm);
 
-
     state.gl.viewport(halfWidth,0,halfWidth,halfHeight);
-    fov = 120 * Math.PI/180
+    fov = 100 * Math.PI/180
     glMatrix.mat4.perspective(pm,
         fov, halfWidth/halfHeight, 1, 100
     );
     glMatrix.mat4.lookAt(vm,
-        glMatrix.vec3.fromValues(1,2,12),
+        glMatrix.vec3.fromValues(1,2,15),
         glMatrix.vec3.fromValues(1,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
+
     drawScene(vm, pm);
-    //// Loop through each object and draw!
-    //state.objects.forEach(function(obj) {
-    //    state.program.renderBuffers(obj);
-    //    
-    //    glMatrix.mat4.copy(mvp, pm);
-    //    glMatrix.mat4.multiply(mvp, mvp, vm);
-    //    obj.calculateMatrix(mvp, state.speed, state.radius);
-    //    
-    //    glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
-//
-    //    state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
-    //    obj.draw(state.gl);
-    //});
 }
 
-function drawScene(cameraMatrix, worldMatrix){//vm,pm
+function drawScene(cameraMatrix, worldMatrix){
     var mvp = state.mvp;
     var uMVPMatrix = state.gl.getUniformLocation(state.program, 'uMVPMatrix');
     // Loop through each object and draw!
