@@ -8,6 +8,7 @@ var state = {
         z:7.0,
     },
     objects: [],
+    curve: null,
     animate: true,
     speed:1000,
     radius:5
@@ -62,7 +63,9 @@ function initState() {
     state.vm = glMatrix.mat4.create();
     state.pm = glMatrix.mat4.create();
     state.mvp = glMatrix.mat4.create();
+    state.curve = new Bezier(-5,2,0 , 2,4,3 , -2,3,5 , -2,0,2);
     state.objects = [
+        new Curve(state.curve),
         new Cylinder("tail"),
         new Circle(0.25,0.0),
         new Circle(0.25,2),
@@ -106,13 +109,12 @@ function draw(args) {
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
         state.program.renderBuffers(obj);
-        
+
         glMatrix.mat4.copy(mvp, pm);
         glMatrix.mat4.multiply(mvp, mvp, vm);
         obj.calculateMatrix(mvp, state.speed, state.radius);
-        
-        glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
 
+        glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
         state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
         obj.draw(state.gl);
     });
