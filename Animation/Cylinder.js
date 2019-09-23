@@ -20,15 +20,9 @@ function Cylinder(type = "") {
     this.state = {
         mm: glMatrix.mat4.create(),
         nm: null,
-    };
-    if (this.role === "focus")
-    {
-        this.selColor = [0.8,0.3,0.4,1.0];
-    }
-    else
-    {
-        this.selColor = [0.1,0.01,0.1,1.0];
-    }
+    };    
+    
+    this.selColor = [0.1,0.01,0.1,1.0];
     this.stride = 0;
 
     this.topFace = null;
@@ -43,37 +37,19 @@ function Cylinder(type = "") {
 
         // Vertices
         var vertices = [], indices = [];
-        if(_this.role === "focus"){
-            for (j = 0; j <= 360; j += step) {
-                aj = j * Math.PI / 180;
-                sj = _this.radius * Math.sin(aj);
-                cj = _this.radius * Math.cos(aj);
-    
-                vertices.push(0.0); //x
-                vertices.push(cj);//y
-                vertices.push(sj); //z
-    
-                vertices.push(_this.height); //x
-                vertices.push(cj);//y
-                vertices.push(sj); //z
-            }
+        for (j = 0; j <= 360; j += step) {
+            aj = j * Math.PI / 180;
+            sj = _this.radius * Math.sin(aj);
+            cj = _this.radius * Math.cos(aj);
+
+            vertices.push(cj); //x
+            vertices.push(sj);//y
+            vertices.push(0.0); //z
+
+            vertices.push(cj); //x
+            vertices.push(sj);//y
+            vertices.push(_this.height); //z
         }
-        else{
-            for (j = 0; j <= 360; j += step) {
-                aj = j * Math.PI / 180;
-                sj = _this.radius * Math.sin(aj);
-                cj = _this.radius * Math.cos(aj);
-    
-                vertices.push(cj); //x
-                vertices.push(sj);//y
-                vertices.push(0.0); //z
-    
-                vertices.push(cj); //x
-                vertices.push(sj);//y
-                vertices.push(_this.height); //z
-            }
-        }
-        
         
         _this.attributes.aPosition.bufferData = new Float32Array(vertices);
         // Indices
@@ -95,23 +71,10 @@ function Cylinder(type = "") {
         _this.attributes.aColor.bufferData = new Float32Array(selColor);
     }(this);
 
-    this.calculateMatrix = function(mvp, speed, radius){
-        if (this.role !== "focus")
-        {
-            var lookAt = glMatrix.mat4.create();
-            var angle = performance.now() / speed / 6 * 2 * Math.PI;
-
-            var translation = glMatrix.vec3.create();
-            glMatrix.vec3.set (translation, 0, -0.2, 1);
-            glMatrix.mat4.translate (mvp, mvp, translation);
-
-            glMatrix.mat4.targetTo(lookAt,
-                glMatrix.vec3.fromValues(Math.cos(angle)*radius,0.2,Math.sin(angle)*radius),
-                glMatrix.vec3.fromValues(1,0,0),
-                glMatrix.vec3.fromValues(0,1,0)
-            );
-            glMatrix.mat4.mul(mvp,mvp,lookAt);
-        }
+    this.calculateMatrix = function(mvp){
+        var translation = glMatrix.vec3.create();
+        glMatrix.vec3.set (translation, 0, -0.2, 1);
+        glMatrix.mat4.translate (mvp, mvp, translation);
     };
 
     this.draw = function(gl){
@@ -185,20 +148,10 @@ function Circle(radius, height){
         _this.attributes.aColor.bufferData = new Float32Array(selColor);
     }(this);
 
-    this.calculateMatrix = function(mvp, speed, radius){
+    this.calculateMatrix = function(mvp){
         var translation = glMatrix.vec3.create();
         glMatrix.vec3.set (translation, 0, -0.2, 1);
         glMatrix.mat4.translate (mvp, mvp, translation);
-
-        var angle = performance.now() / speed / 6 * 2 * Math.PI;
-
-        var lookAt = glMatrix.mat4.create();
-        glMatrix.mat4.targetTo(lookAt,
-            glMatrix.vec3.fromValues(Math.cos(angle)*radius,0.2,Math.sin(angle)*radius),
-            glMatrix.vec3.fromValues(1,0,0),
-            glMatrix.vec3.fromValues(0,1,0)
-        );
-        glMatrix.mat4.mul(mvp,mvp,lookAt);
     };
 
     this.draw = function(gl){

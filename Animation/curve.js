@@ -2,7 +2,7 @@ function Curve(bezierCurve) {
     this.bezier = bezierCurve;
     this.radius = 0.25;
     this.steps = 100;
-    this.LUT = bezierCurve.getLUT(this.steps);
+    this.LUT = [];
     this.attributes = {
         aColor: {
             size:4,
@@ -28,39 +28,40 @@ function Curve(bezierCurve) {
     this.topFace = null;
     this.botomFace = null;
 
-    // Initialization
-    this.init = function(_this) {
+    this.updateCurve = function(){
         var vertices = [], indices = [];
 
-        for(i=0; i<_this.steps;i++){
-            vertices.push(_this.LUT[i].x); //x
-            vertices.push(_this.LUT[i].y); //y
-            vertices.push(_this.LUT[i].z); //z
+        this.LUT = this.bezier.getLUT(this.steps);
+
+        for(i=0; i<this.steps;i++){
+            vertices.push(this.LUT[i].x); //x
+            vertices.push(this.LUT[i].y); //y
+            vertices.push(this.LUT[i].z); //z
         }
-        _this.attributes.aPosition.bufferData = new Float32Array(vertices);
+        this.attributes.aPosition.bufferData = new Float32Array(vertices);
         for (j = 0; j < vertices.length/3; j++) {
             indices.push(j);
         }
-        _this.indices = new Uint8Array(indices);
+        this.indices = new Uint8Array(indices);
 
         var selColor = [];
         for (j = 0; j <= vertices.length/3; j++) {
-            selColor.push(_this.selColor[0]);
-            selColor.push(_this.selColor[1]);
-            selColor.push(_this.selColor[2]);
-            selColor.push(_this.selColor[3]);
+            selColor.push(this.selColor[0]);
+            selColor.push(this.selColor[1]);
+            selColor.push(this.selColor[2]);
+            selColor.push(this.selColor[3]);
         }
-        _this.attributes.aColor.bufferData = new Float32Array(selColor);
+        this.attributes.aColor.bufferData = new Float32Array(selColor);
+    }
+    // Initialization
+    this.init = function(_this) {
+        _this.updateCurve();
     }(this);
 
-    this.calculateMatrix = function(mvp, speed, radius){
+    this.calculateMatrix = function(mvp){
     }
 
     this.draw = function(gl){
         state.gl.drawElements(gl.LINE_STRIP, this.indices.length, gl.UNSIGNED_BYTE, 0);
-    }
-
-    this.updateCurve = function(){
-
     }
 };

@@ -199,9 +199,8 @@ function Rectangle(lenght, widht, orientation, type) {
     
     }(this);
 
-    this.calculateMatrix = function(mvp, speed, radius){
-        var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        var orbit = performance.now() / speed / 6 * 2 * Math.PI;
+    this.calculateMatrix = function(mvp){
+        var angle = performance.now() / 100 / 6 * 2 * Math.PI;
         var identityMatrix = new Float32Array(16);
         glMatrix.mat4.identity(identityMatrix);
 
@@ -217,16 +216,8 @@ function Rectangle(lenght, widht, orientation, type) {
 
             glMatrix.vec3.set (translationZ, 0, 0, 2.75);
             glMatrix.vec3.set (translationX, 0.25, 0, 0);
-            //glMatrix.mat4.translate (mvp, mvp, translationZ);
+            glMatrix.mat4.translate (mvp, mvp, translationZ);
             glMatrix.mat4.translate (mvp, mvp, translationX);
-
-            var lookAt = glMatrix.mat4.create();
-            glMatrix.mat4.targetTo(lookAt,
-                glMatrix.vec3.fromValues(Math.cos(orbit)*(radius+2.75), 0, Math.sin(orbit)*(radius+2.75)),
-                glMatrix.vec3.fromValues(1,0,0),
-                glMatrix.vec3.fromValues(0,1,0)
-            );
-            glMatrix.mat4.mul(mvp,mvp,lookAt);
         }
         else if (this.type === "rtop"){
             var rotationX = new Float32Array(16);
@@ -239,10 +230,6 @@ function Rectangle(lenght, widht, orientation, type) {
             var translation = glMatrix.vec3.create();
             glMatrix.vec3.set (translation, 0, 0, -1.65);
             glMatrix.mat4.translate (this.state.mm, this.state.mm, translation);
-
-            var translation = glMatrix.vec3.create();
-            glMatrix.vec3.set (translation, Math.cos(orbit)*radius, 0, Math.sin(orbit)*radius);
-            glMatrix.mat4.translate (mvp, mvp, translation);
         }
     };
     
