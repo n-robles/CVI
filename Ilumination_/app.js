@@ -13,26 +13,10 @@ var state = {
     time: 0.0,
     curvePos: 0.0,
     speed:1000,
-    direction: true
+    spawn: false
 };
 
 var sliderSpeed = document.getElementById('speed');
-
-var x1 = document.getElementById('point1x');
-var y1 = document.getElementById('point1y');
-var z1 = document.getElementById('point1z');
-
-var x2 = document.getElementById('point2x');
-var y2 = document.getElementById('point2y');
-var z2 = document.getElementById('point2z');
-
-var x3 = document.getElementById('point3x');
-var y3 = document.getElementById('point3y');
-var z3 = document.getElementById('point3z');
-
-var x4 = document.getElementById('point4x');
-var y4 = document.getElementById('point4y');
-var z4 = document.getElementById('point4z');
 
 sliderSpeed.onchange = function() 
 {
@@ -40,68 +24,6 @@ sliderSpeed.onchange = function()
   state.curvePos = 0.0;
   animate();
 }
-
-function calculateNewCurve(){
-    state.curve = new Bezier([
-        {x:Number(x1.value),y:Number(y1.value),z:Number(z1.value)},
-        {x:Number(x2.value),y:Number(y2.value),z:Number(z2.value)},
-        {x:Number(x3.value),y:Number(y3.value),z:Number(z3.value)},
-        {x:Number(x4.value),y:Number(y4.value),z:Number(z4.value)}
-    ]);
-    state.curvePos = 0.0;
-    animate();
-}
-
-function setInputFilter(textbox, inputFilter) {
-    ["input", "keydown", "keyup", "mousedown", "mouseup", "select", "contextmenu", "drop"].forEach(function(event) {
-        textbox.addEventListener(event, function() {
-        if (inputFilter(this.value)) {
-            this.oldValue = this.value;
-            this.oldSelectionStart = this.selectionStart;
-            this.oldSelectionEnd = this.selectionEnd;
-        } else if (this.hasOwnProperty("oldValue")) {
-            this.value = this.oldValue;
-            this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
-        }
-        });
-    });
-}
-
-setInputFilter(x1, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(x2, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(x3, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(x4, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(y1, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(y2, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(y3, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(y4, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(z1, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(z2, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(z3, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
-
-setInputFilter(z4, function(value) {
-    return /^-?\d*[.,]?\d*$/.test(value); });
 
 glUtils.SL.init({ callback:function() { main(); } });
 
@@ -138,22 +60,20 @@ function initState() {
     state.vm = glMatrix.mat4.create();
     state.pm = glMatrix.mat4.create();
     state.mvp = glMatrix.mat4.create();
-    state.curve = new Bezier([{x:-4,y:0,z:-4}, {x:-4,y:2,z:4}, {x:4,y:4,z:4}, {x:4,y:-4,z:-4}]);
+    state.curve = new Bezier([{x:0,y:0,z:4}, {x:-4,y:0,z:0}, {x:0,y:0,z:-4}, {x:4,y:0,z:0}]);
     state.objects = [
-        //new Curve(state.curve),
-        //new Cylinder("tail", state.gl),
-        //new Circle(0.25,0.0),
-        //new Circle(0.25,2),
-        new Sphere(state.gl, "Planet"),
-        new Sphere(state.gl, "Sun"),
-        //new Rectangle(0.5,0.15,"top","rback", state.gl),
-        //new Rectangle(0.5,0.15,"bot","rback", state.gl),
-        //new Rectangle(0.5,0.15,"left","rback", state.gl),
-        //new Rectangle(0.5,0.15,"right","rback", state.gl),
-        //new Rectangle(2,0.25,"top","rtop", state.gl),
-        //new Rectangle(2,0.25,"bot","rtop", state.gl),
-        //new Rectangle(2,0.25,"left","rtop", state.gl),
-        //new Rectangle(2,0.25,"right","rtop", state.gl)
+        new Cylinder("plane", state.gl),
+        new Sphere(state.gl, 3.0, "WORLD", "mars"),//planeta
+        new Sphere(state.gl, 0.5, "SUN", "sun"),//sol
+        new Sphere(state.gl, 0.25, "MODEL", "plane"),//nave
+        new Rectangle(0.15,0.05,"top","rback", state.gl, "plane"),
+        new Rectangle(0.15,0.05,"bot","rback", state.gl, "plane"),
+        new Rectangle(0.15,0.05,"left","rback", state.gl, "plane"),
+        new Rectangle(0.15,0.05,"right","rback", state.gl, "plane"),
+        new Rectangle(0.5,0.05,"top","rtop", state.gl, "plane"),
+        new Rectangle(0.5,0.05,"bot","rtop", state.gl, "plane"),
+        new Rectangle(0.5,0.05,"left","rtop", state.gl, "plane"),
+        new Rectangle(0.5,0.05,"right","rtop", state.gl, "plane")
     ];
 }
 
@@ -197,21 +117,13 @@ function draw(time) {
     // Set the ambient light
     state.gl.uniform3f(uAmbientLight, 0.2, 0.2, 0.2);
     var tick = time/state.speed
-    if (state.direction){
-        state.curvePos += tick;
-    }
-    else{
-        state.curvePos -= tick;
-    }
+    state.curvePos += tick;
     
     if (state.curvePos > 1){
-        state.direction = false;
-    }
-    else if(state.curvePos < 0){
-        state.direction = true;
-    }
-    var pos = state.curve.get(state.curvePos);
-    var dv = state.curve.derivative(state.curvePos);
+        state.spawn = true;
+        state.curvePos = 0;
+    }    
+    
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
         if (obj.objType === "Curve" && (obj.bezier.toString() !== state.curve.toString())){
@@ -222,35 +134,20 @@ function draw(time) {
 
         glMatrix.mat4.copy(mvp, pm);
         glMatrix.mat4.multiply(mvp, mvp, vm);
-
-        // Set the light direction (in the world coordinate)
-        state.gl.uniform3f(uSunLightPosition, 6.0, 8.0, 7.0);//move sun
-        state.gl.uniform3f(uStaticLight, 6.0, 8.0, 7.0);
-        state.gl.uniform3f(uMovingLight, 6.0, 8.0, 7.0);//move light
         
-        /*if (obj.objType !== "Curve"){
-            //var translation = glMatrix.vec3.create();
-            //glMatrix.vec3.set (translation, pos.x, pos.y, pos.z);
-            //glMatrix.mat4.translate (mvp, mvp, translation);
-            var lookAt = glMatrix.mat4.create();
-            if (state.direction){
-                glMatrix.mat4.targetTo(lookAt,
-                    glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
-                    glMatrix.vec3.fromValues(dv.x, dv.y, dv.z),
-                    glMatrix.vec3.fromValues(0,1,0)
-                );
-                glMatrix.mat4.mul(mvp,mvp,lookAt);
-            }
-            else{
-                glMatrix.mat4.targetTo(lookAt,
-                    glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
-                    glMatrix.vec3.fromValues(-dv.x, -dv.y, -dv.z),
-                    glMatrix.vec3.fromValues(0,1,0)
-                );
-                glMatrix.mat4.mul(mvp,mvp,lookAt);
-            }
-            
-        }*/
+        if (obj.role === "plane"){
+            updateHelicopter(mvp, uMovingLight);
+        }
+        else if(obj.role === "sun"){
+            updateSun(mvp, uSunLightPosition);
+        }
+        else if (obj.role === "mars"){
+            updatePlanet(mvp);
+        }
+        else{
+            updateLanding(mvp, obj, uStaticLight);
+        }
+
         obj.calculateMatrix(mvp);
 
         glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
@@ -269,4 +166,74 @@ function draw(time) {
 
         obj.draw(state.gl);
     });
+}
+
+function updateHelicopter(mvp, uMovingLight){
+    var pos = state.curve.get(state.curvePos);
+    var dv = state.curve.derivative(state.curvePos);
+    var lookAt = glMatrix.mat4.create();
+
+    var angle = performance.now() / state.speed / 6 * 2 * Math.PI;
+
+    glMatrix.mat4.targetTo(lookAt,
+        //glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
+        //glMatrix.vec3.fromValues(dv.x, dv.y, dv.z),
+        glMatrix.vec3.fromValues(Math.cos(angle)*3.5, 0, Math.sin(angle)*3.5),
+        glMatrix.vec3.fromValues(0.5, 0, 0),
+        glMatrix.vec3.fromValues(0,1,0)
+    );
+    glMatrix.mat4.mul(mvp,mvp,lookAt);
+    state.gl.uniform3f(uMovingLight, Math.cos(angle)*3.5, 0, Math.sin(angle)*3.5);//move light
+}
+
+function updateSun(mvp, uSunLightPosition){
+    var lookAt = glMatrix.mat4.create();
+    var angle = performance.now() / (state.speed * 2) / 6 * 2 * Math.PI;
+
+    glMatrix.mat4.targetTo(lookAt,
+        //glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
+        //glMatrix.vec3.fromValues(dv.x, dv.y, dv.z),
+        glMatrix.vec3.fromValues(Math.cos(angle)*8, 0, Math.sin(angle)*8),
+        glMatrix.vec3.fromValues(0.5, 0, 0),
+        glMatrix.vec3.fromValues(0,1,0)
+    );
+    glMatrix.mat4.mul(mvp,mvp,lookAt);
+    state.gl.uniform3f(uSunLightPosition, Math.cos(angle)*8, 0, Math.sin(angle)*8);//move sun
+}
+
+function updatePlanet(mvp){
+    if (state.spawn){
+        spawnBuilding();
+        state.spawn = false;
+    }
+}
+
+function updateLanding(mvp, obj, uStaticLight){
+    if (obj.hasLight){
+        state.gl.uniform3f(uStaticLight, obj.pos[0], obj.pos[1], obj.pos[2]);
+    }
+}
+
+function spawnBuilding(){
+    var angle1, angle2;
+    var rdn1, rdn2;
+    var x, y, z;
+    var hasLight = true;
+
+    rdn1 = Math.random() * 2;
+    rdn1 = rdn1 > 1 ? 1 : rdn1;
+    rdn2 = Math.random() * 2;
+    rdn2 = rdn2 > 1 ? 1 : rdn2;
+    //hasLight = (Math.floor(Math.random() * 2) == 1) ? true : false;
+
+    angle1 = Math.acos((2 * rdn1) - 1) - (Math.PI/2);
+    angle2 = 2 * Math.PI * rdn2;
+
+    x = 3 * (Math.cos(angle1) * Math.cos(angle2));
+    y = 3 * (Math.cos(angle1) * Math.sin(angle2));
+    z = 3 * Math.sin(angle1);
+    
+    var pos = glMatrix.vec3.fromValues(x,y,z);
+    hasLight
+    state.objects.push(new Cube(0.5,state.gl, pos, hasLight));
 }

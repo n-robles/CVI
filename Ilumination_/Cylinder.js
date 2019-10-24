@@ -1,8 +1,8 @@
 // Create a cylinder
 function Cylinder(type = "", gl) {
     this.gl = gl;
-    this.height = 2;
-    this.radius = 0.25;
+    this.height = 0.6;
+    this.radius = 0.05;
     this.attributes = {
         aTexCoord: {
             size:2,
@@ -75,6 +75,7 @@ function Cylinder(type = "", gl) {
         _this.textureImg.onload = function(){
             _this.initTextures()
         }
+        _this.textureImg.crossorigin = "anonymous";
         _this.textureImg.src = "rustymetal.jpg";
     }(this);
 
@@ -93,7 +94,7 @@ function Cylinder(type = "", gl) {
 
     this.calculateMatrix = function(mvp){
         var translation = glMatrix.vec3.create();
-        glMatrix.vec3.set (translation, 0, -0.2, 1);
+        glMatrix.vec3.set (translation, 0, -0.02, 0.1);
         glMatrix.mat4.translate (mvp, mvp, translation);
     };
 

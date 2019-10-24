@@ -1,5 +1,5 @@
 // Create a sphere
-function Sphere(gl, role) {
+function Sphere(gl, radius, type, role) {
     this.gl = gl;
     this.attributes = {
         aTexCoord: {
@@ -28,25 +28,24 @@ function Sphere(gl, role) {
     };
     this.stride = 0;
     this.objType = "Sphere";
+    this.radius = radius;
+    this.type = type;
     this.role = role;
 
     // Initialization
     this.init = function(_this) {
         var sphereSegments = 12;
-        var radius = 2;
         var i, ai, si, ci;
         var j, aj, sj, cj;
         var p1, p2;
 
         // Vertices
-        if (role !== "Planet"){
-            radius = 1;
-        }
+        
         var vertices = [], indices = [], texcoords = [];
         for (j = 0; j <= sphereSegments; j++) {
             aj = j * Math.PI / sphereSegments;
-            sj = radius*Math.sin(aj);
-            cj = radius*Math.cos(aj);
+            sj = _this.radius*Math.sin(aj);
+            cj = _this.radius*Math.cos(aj);
             for (i = 0; i <= sphereSegments; i++) {
                 ai = i * 2 * Math.PI / sphereSegments;
                 si = Math.sin(ai);
@@ -82,23 +81,52 @@ function Sphere(gl, role) {
         _this.textureImg.onload = function(){
             _this.initTextures()
         }
-        _this.textureImg.src = "mars.jpg";
+        _this.textureImg.crossorigin = "anonymous";
+        if (_this.role === "plane"){
+            _this.textureImg.src = "rustymetal.jpg";
+        }
+        else if(_this.role === "sun"){
+            _this.textureImg.src = "sun.jpg";
+        }
+        else{
+            _this.textureImg.src = "mars.jpg";
+        }
     }(this);
 
     this.initTextures = function(){
         var texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.textureImg);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.bindTexture(gl.TEXTURE_2D, null);
+        if (this.role === "plane"){
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.textureImg);
+            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+        else{
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.textureImg);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
         this.texture = texture;
     };
 
     this.calculateMatrix = function(mvp){
+        var translation = glMatrix.vec3.create();
+        if (this.type === "SUN"){
+            glMatrix.vec3.set (translation, 0, 0, 7.0);
+            glMatrix.mat4.translate (mvp, mvp, translation);
+        }
+        else if (this.type === "MODEL"){
+            glMatrix.vec3.set (translation, 0, 3.5, 0);
+            //glMatrix.mat4.translate (mvp, mvp, translation);
+        }
     };
 
     this.draw = function(gl){

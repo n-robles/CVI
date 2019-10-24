@@ -9,43 +9,11 @@
             <p>Velocidad de moviemitno del Helicoptero<br>
             <input type="range" min="1" max="20" value="5" class="slider" id="speed">
         </div>
-
-        <div class="curvePointContainer">
-            <p>Puntos por para crear la curva<br>
-            <table>
-                <tr>
-                    <td>Punto 1</td>
-                    <td><input type="text" id="point1x" value="-4"></td>
-                    <td><input type="text" id="point1y" value="0"></td>
-                    <td><input type="text" id="point1z" value="-4"></td>
-                </tr>
-                </tr>
-                    <td>Punto 2</td>
-                    <td><input type="text" id="point2x" value="-4"></td>
-                    <td><input type="text" id="point2y" value="2"></td>
-                    <td><input type="text" id="point2z" value="4"></td>
-                </tr>
-                <tr>
-                    <td>Punto 3</td>
-                    <td><input type="text" id="point3x" value="4"></td>
-                    <td><input type="text" id="point3y" value="4"></td>
-                    <td><input type="text" id="point3z" value="4"></td>
-                </tr>
-                <tr>
-                    <td>Punto 4</td>
-                    <td><input type="text" id="point4x" value="4"></td>
-                    <td><input type="text" id="point4y" value="-4"></td>
-                    <td><input type="text" id="point4z" value="-4"></td>
-                </tr>
-            </table>
-            <br>
-            <input type="button" onclick="calculateNewCurve();" value="Calcular Curva">
-        </div>
         <br>
         <canvas width = "800" height = "600" id = "glcanvas"></canvas>
         <!-- Shaders -->
-        <script name="shader" data-src="shaders/vertex.glsl" data-type="vertex" data-version="v1"></script>
-        <script name="shader" data-src="shaders/fragment.glsl" data-type="fragment" data-version="v1"></script>
+        <script name="shader" data-src="shaders/vertex.glsl" data-type="vertex" data-version="v1" crossorigin="anonymous"></script>
+        <script name="shader" data-src="shaders/fragment.glsl" data-type="fragment" data-version="v1" crossorigin="anonymous"></script>
 
         <script src="../utils/gl-matrix-min.js"></script>
         <script src="../utils/glUtils.js"></script>
@@ -57,5 +25,6 @@
         <script src="Sphere.js"></script>
         <script src="Cylinder.js"></script>
         <script src="Rotor.js"></script>
+        <script src="cube.js"></script>
     </body>
 </html>

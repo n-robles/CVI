@@ -140,10 +140,7 @@ function initState() {
     state.mvp = glMatrix.mat4.create();
     state.curve = new Bezier([{x:-4,y:0,z:-4}, {x:-4,y:2,z:4}, {x:4,y:4,z:4}, {x:4,y:-4,z:-4}]);
     state.objects = [
-        //new Curve(state.curve),
         new Cylinder("tail", state.gl),
-        //new Circle(0.25,0.0),
-        //new Circle(0.25,2),
         new Sphere(state.gl),
         new Rectangle(0.5,0.15,"top","rback", state.gl),
         new Rectangle(0.5,0.15,"bot","rback", state.gl),

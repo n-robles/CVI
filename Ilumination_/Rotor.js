@@ -1,5 +1,5 @@
 // Create a rotor
-function Rectangle(lenght, widht, orientation, type, gl) {
+function Rectangle(lenght, widht, orientation, type, gl, role) {
     this.gl = gl;
     this.attributes = {
         aTexCoord: {
@@ -31,49 +31,145 @@ function Rectangle(lenght, widht, orientation, type, gl) {
         nm: null,
     };
     this.objType = "Rectangle";
-    this.role = "body";
+    this.role = role;
     this.stride = 0;
 
     // Initialization
     this.init = function(_this) {
-        var vertices = [], indices = [], normal=[];
-        vertices = [
-            // Front face
-            -1.0, -1.0, 1.0,
-            1.0, -1.0, 1.0,
-            1.0, 1.0, 1.0,
-            -1.0, 1.0, 1.0,
-    
-            // Back face
-            -1.0, -1.0, -1.0,
-            -1.0, 1.0, -1.0,
-            1.0, 1.0, -1.0,
-            1.0, -1.0, -1.0,
-    
-            // Top face
-            -1.0, 1.0, -1.0,
-            -1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, -1.0,
-    
-            // Bottom face
-            -1.0, -1.0, -1.0,
-            1.0, -1.0, -1.0,
-            1.0, -1.0, 1.0,
-            -1.0, -1.0, 1.0,
-    
-            // Right face
-            1.0, -1.0, -1.0,
-            1.0, 1.0, -1.0,
-            1.0, 1.0, 1.0,
-            1.0, -1.0, 1.0,
-    
-            // Left face
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            -1.0, 1.0, -1.0,
-        ];
+        var vertices = [], indices = [];
+        if (_this.orientation === "top")
+        {
+            vertices = [
+                -_this.widht/2, _this.lenght+0.1, -0,
+                -_this.widht/2, _this.lenght+0.1, 0.05,
+                _this.widht/2, _this.lenght+0.1, 0.05,
+                _this.widht/2, _this.lenght+0.1, -0,
+                // Left
+                -_this.widht/2, _this.lenght+0.1, 0.05,
+                -_this.widht/2, -0+0.1, 0.05,
+                -_this.widht/2, -0+0.1, -0,
+                -_this.widht/2, _this.lenght+0.1, -0,
+                // Right
+                _this.widht/2, _this.lenght+0.1, 0.05,
+                _this.widht/2, -0+0.1, 0.05,
+                _this.widht/2, -0+0.1, -0,
+                _this.widht/2, _this.lenght+0.1, -0,
+                // Front
+                _this.widht/2, _this.lenght+0.1, 0.05,
+                _this.widht/2, -0+0.1, 0.05,
+                -_this.widht/2, -0+0.1, 0.05,
+                -_this.widht/2, _this.lenght+0.1, 0.05,
+                // Back
+                _this.widht/2, _this.lenght+0.1, -0,
+                _this.widht/2, -0+0.1, -0,
+                -_this.widht/2, -0+0.1, -0,
+                -_this.widht/2, _this.lenght+0.1, -0,
+                // Bottom
+                -_this.widht/2, -0+0.1, -0,
+                -_this.widht/2, -0+0.1, 0.05,
+                _this.widht/2, -0+0.1, 0.05,
+                _this.widht/2, -0+0.1, -0,
+            ];
+        } 
+        else if (_this.orientation === "bot"){
+            vertices = [
+                -_this.widht/2, 0-0.1, -0,
+                -_this.widht/2, 0-0.1, 0.05,
+                _this.widht/2, 0-0.1, 0.05,
+                _this.widht/2, 0-0.1, -0,
+                // Left
+                -_this.widht/2, 0-0.1, 0.05,
+                -_this.widht/2, -_this.lenght-0.1, 0.05,
+                -_this.widht/2, -_this.lenght-0.1, -0,
+                -_this.widht/2, 0-0.1, -0,
+                // Right
+                _this.widht/2, 0-0.1, 0.05,
+                _this.widht/2, -_this.lenght-0.1, 0.05,
+                _this.widht/2, -_this.lenght-0.1, -0,
+                _this.widht/2, 0-0.1, -0,
+                // Front
+                _this.widht/2, 0-0.1, 0.05,
+                _this.widht/2, -_this.lenght-0.1, 0.05,
+                -_this.widht/2, -_this.lenght-0.1, 0.05,
+                -_this.widht/2, 0-0.1, 0.05,
+                // Back
+                _this.widht/2, 0-0.1, -0,
+                _this.widht/2, -_this.lenght-0.1, -0,
+                -_this.widht/2, -_this.lenght-0.1, -0,
+                -_this.widht/2, 0-0.1, -0,
+                // Bottom
+                -_this.widht/2, -_this.lenght-0.1, -0,
+                -_this.widht/2, -_this.lenght-0.1, 0.05,
+                _this.widht/2, -_this.lenght-0.1, 0.05,
+                _this.widht/2, -_this.lenght-0.1, -0,
+            ];
+        }
+        else if (_this.orientation === "left"){
+            vertices = [
+                -_this.lenght-0.1, _this.widht/2, -0,
+                -_this.lenght-0.1, _this.widht/2, 0.05,
+                0-0.1, _this.widht/2, 0.05,
+                0-0.1, _this.widht/2, -0,
+                // Left
+                -_this.lenght-0.1, _this.widht/2, 0.05,
+                -_this.lenght-0.1, -_this.widht/2, 0.05,
+                -_this.lenght-0.1, -_this.widht/2, -0,
+                -_this.lenght-0.1, _this.widht/2, -0,
+                // Right
+                0-0.1, _this.widht/2, 0.05,
+                0-0.1, -_this.widht/2, 0.05,
+                0-0.1, -_this.widht/2, -0,
+                0-0.1, _this.widht/2, -0,
+                // Front
+                0-0.1, _this.widht/2, 0.05,
+                0-0.1, -_this.widht/2, 0.05,
+                -_this.lenght-0.1, -_this.widht/2, 0.05,
+                -_this.lenght-0.1, _this.widht/2, 0.05,
+                // Back
+                0-0.1, _this.widht/2, -0,
+                0-0.1, -_this.widht/2, -0,
+                -_this.lenght-0.1, -_this.widht/2, -0,
+                -_this.lenght-0.1, _this.widht/2, -0,
+                // Bottom
+                -_this.lenght-0.1, -_this.widht/2, -0,
+                -_this.lenght-0.1, -_this.widht/2, 0.05,
+                0-0.1, -_this.widht/2, 0.05,
+                0-0.1, -_this.widht/2, -0,
+            ];
+        } 
+        else if (_this.orientation === "right"){
+            vertices = [
+                _this.lenght+0.1, _this.widht/2, -0,
+                _this.lenght+0.1, _this.widht/2, 0.05,
+                0+0.1, _this.widht/2, 0.05,
+                0+0.1, _this.widht/2, -0,
+                // Left
+                0+0.1, _this.widht/2, 0.05,
+                0+0.1, -_this.widht/2, 0.05,
+                0+0.1, -_this.widht/2, -0,
+                0+0.1, _this.widht/2, -0,
+                // Right
+                _this.lenght+0.1, _this.widht/2, 0.05,
+                _this.lenght+0.1, -_this.widht/2, 0.05,
+                _this.lenght+0.1, -_this.widht/2, -0,
+                _this.lenght+0.1, _this.widht/2, -0,
+                // Front
+                0+0.1, _this.widht/2, 0.05,
+                0+0.1, -_this.widht/2, 0.05,
+                _this.lenght+0.1, -_this.widht/2, 0.05,
+                _this.lenght+0.1, _this.widht/2, 0.05,
+                // Back
+                0+0.1, _this.widht/2, -0,
+                0+0.1, -_this.widht/2, -0,
+                _this.lenght+0.1, -_this.widht/2, -0,
+                _this.lenght+0.1, _this.widht/2, -0,
+                // Bottom
+                _this.lenght+0.1, -_this.widht/2, -0,
+                _this.lenght+0.1, -_this.widht/2, 0.05,
+                0+0.1, -_this.widht/2, 0.05,
+                0+0.1, -_this.widht/2, -0,
+            ];
+        }
 
         indices = [
             // Top
@@ -95,47 +191,9 @@ function Rectangle(lenght, widht, orientation, type, gl) {
             21, 20, 22,
             22, 20, 23
         ];
-
-        normal = [
-            // Front
-            0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0,
-    
-            // Back
-            0.0, 0.0, -1.0,
-            0.0, 0.0, -1.0,
-            0.0, 0.0, -1.0,
-            0.0, 0.0, -1.0,
-    
-            // Top
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-    
-            // Bottom
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-    
-            // Right
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-    
-            // Left
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0
-        ];
         
         _this.attributes.aPosition.bufferData = new Float32Array(vertices);
-        _this.attributes.aNormal.bufferData = new Float32Array(normal);
+        _this.attributes.aNormal.bufferData = new Float32Array(vertices);
         _this.indices = new Uint8Array(indices);   
     
         var textureCoords = [
@@ -180,6 +238,7 @@ function Rectangle(lenght, widht, orientation, type, gl) {
         _this.textureImg.onload = function(){
             _this.initTextures()
         }
+        _this.textureImg.crossorigin = "anonymous";
         _this.textureImg.src = "rustedmetal2.jpg";
     }(this);
 
@@ -211,8 +270,8 @@ function Rectangle(lenght, widht, orientation, type, gl) {
             glMatrix.mat4.rotate(rotationY, identityMatrix, Math.PI/2, [0, 1, 0]);
             glMatrix.mat4.mul(this.state.mm, rotationY, rotationZ);
 
-            glMatrix.vec3.set (translationZ, 0, 0, 2.75);
-            glMatrix.vec3.set (translationX, 0.25, 0, 0);
+            glMatrix.vec3.set (translationZ, 0, 0, 0.6);
+            glMatrix.vec3.set (translationX, 0.05, 0, 0);
             glMatrix.mat4.translate (mvp, mvp, translationZ);
             glMatrix.mat4.translate (mvp, mvp, translationX);
         }
@@ -225,7 +284,7 @@ function Rectangle(lenght, widht, orientation, type, gl) {
             glMatrix.mat4.mul(this.state.mm, rotationX, rotationZ);
 
             var translation = glMatrix.vec3.create();
-            glMatrix.vec3.set (translation, 0, 0, -1.65);
+            glMatrix.vec3.set (translation, 0, 0, -0.4);
             glMatrix.mat4.translate (this.state.mm, this.state.mm, translation);
         }
     };
