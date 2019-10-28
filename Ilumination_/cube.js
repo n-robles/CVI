@@ -180,7 +180,7 @@ function Cube(side, gl, pos, hasLight) {
             _this.initTextures()
         }
         _this.textureImg.crossorigin = "anonymous";
-        _this.textureImg.src = "rustedmetal2.jpg";
+        _this.textureImg.src = "bricks.jpg";
     }(this);
 
     this.initTextures = function(){
