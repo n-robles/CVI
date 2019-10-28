@@ -26,7 +26,10 @@ sliderSpeed.onchange = function()
   animate();
 }
 
-glUtils.SL.init({ callback:function() { main(); } });
+glUtils.SL.init({ callback:function() {
+    state.frameBuffer = createShadowFrameBuffer(state.gl, 512, 512);
+     main(); 
+    } });
 
 function main() {
     state.canvas = document.getElementById("glcanvas");
@@ -39,7 +42,7 @@ function main() {
     initState();
     var date = new Date();
     state.time = date.getTime();
-    state.frameBuffer = createShadowFrameBuffer();
+    
     draw(0.0);
     if (state.animate) {
         animate();
@@ -65,7 +68,12 @@ function initState() {
     state.vm = glMatrix.mat4.create();
     state.pm = glMatrix.mat4.create();
     state.mvp = glMatrix.mat4.create();
-    state.curve = new Bezier([{x:0,y:0,z:4}, {x:-4,y:0,z:0}, {x:0,y:0,z:-4}, {x:4,y:0,z:0}]);
+
+    state.shadowMvp = glMatrix.mat4.create();
+    state.shadowVm = glMatrix.mat4.create();
+    state.shadowPm = glMatrix.mat4.create();
+
+
     state.objects = [
         new Cylinder("plane", state.gl),
         new Sphere(state.gl, 3.0, "WORLD", "mars"),//planeta
@@ -109,17 +117,34 @@ function draw(time) {
     var shadowMapTransform = state.gl.getUniformLocation(state.program, 'uShadowMapTransformMatrix');
 
     //var shadowMapTransform = state.gl.getUniformLocation(state.shadowProgram, 'uShadowMapTransformMatrix');
-    var uMVPMatrix = state.gl.getUniformLocation(state.shadowProgram, 'uMVPMatrix');
+    var uMVPMatrixS = state.gl.getUniformLocation(state.shadowProgram, 'uMVPMatrix');
 
     var vm = state.vm;
     var pm = state.pm;
     var mvp = state.mvp;
+
+    var smvp = state.shadowMvp;
+    var svm = state.shadowVm;
+    var spm = state.shadowPm;
+
+    var angleLight = performance.now() / state.speed / 6 * 2 * Math.PI;
+    var angleSun = performance.now() / (state.speed * 2) / 6 * 2 * Math.PI;
+
     var fov = 120 * Math.PI/180
     glMatrix.mat4.perspective(pm,
         fov, state.canvas.width/state.canvas.height, 1, 100
     );
+    glMatrix.mat4.perspective(spm,
+        fov, 512/512, 1, 100
+    );
     glMatrix.mat4.lookAt(vm,
         glMatrix.vec3.fromValues(state.eye.x,state.eye.y,state.eye.z),
+        glMatrix.vec3.fromValues(0,0,0),
+        glMatrix.vec3.fromValues(0,1,0)
+    );
+
+    glMatrix.mat4.lookAt(svm,
+        glMatrix.vec3.fromValues(Math.cos(angleSun)*6.5, 0, Math.sin(angleSun)*6.5),
         glMatrix.vec3.fromValues(0,0,0),
         glMatrix.vec3.fromValues(0,1,0)
     );
@@ -127,19 +152,27 @@ function draw(time) {
     state.gl.uniform3f(uLightColor, 1.2, 1.2, 0.0);
     // Set the ambient light
     state.gl.uniform3f(uAmbientLight, 0.2, 0.2, 0.2);
-    state.gl.uniform3f(shadowMapTransform, false, glMatrix.mat4.create());
+    
     var tick = time/state.speed
     state.curvePos += tick;
     
     if (state.curvePos > 1){
         state.spawn = true;
         state.curvePos = 0;
-    }  
-    var angleLight = performance.now() / state.speed / 6 * 2 * Math.PI;
-    var angleSun = performance.now() / (state.speed * 2) / 6 * 2 * Math.PI;
-    renderShadow(uMVPMatrix, pm, angleLight, angleSun);
+    } 
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER,  null);
+    glMatrix.mat4.copy(smvp, spm);
+    glMatrix.mat4.multiply(smvp, smvp, svm);
+
+    renderShadow(uMVPMatrixS, angleLight, angleSun, smvp);
+
+    state.gl.useProgram(state.program);
+    state.gl.clear(state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT);
+    state.gl.viewport(0, 0, state.canvas.width, state.canvas.height);
+
+    state.gl.uniformMatrix4fv(shadowMapTransform, false, smvp);
+
+   state.gl.bindFramebuffer(state.gl.FRAMEBUFFER,  null);
     
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
@@ -254,20 +287,16 @@ function spawnBuilding(){
     state.objects.push(new Cube(0.5,state.gl, pos, hasLight));
 }
 
-function renderShadow(uMVPMatrix, pm, angle1, angle2){
-    var mvp = state.shadowMvp;
-    var vm = state.shadowVm;
-    glMatrix.mat4.lookAt(vm,
-        glMatrix.vec3.fromValues(Math.cos(angle2)*6.5, 0, Math.sin(angle2)*6.5),
-        glMatrix.vec3.fromValues(0.5,0,0),
-        glMatrix.vec3.fromValues(0,1,0)
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER,  state.frameBuffer);
+function renderShadow(uMVPMatrix, angle1, angle2, smvp){  
+    state.gl.useProgram(state.shadowProgram);
+    var mvp = glMatrix.mat4.create();
+    glMatrix.mat4.copy(mvp, smvp);
+    state.gl.clear(state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT);
+    state.gl.viewport(0, 0, 512, 512);
+
+    state.gl.bindFramebuffer(state.gl.FRAMEBUFFER,  state.frameBuffer);
     state.objects.forEach(function(obj) {
         state.shadowProgram.renderBuffers(obj);
-
-        glMatrix.mat4.copy(mvp, pm);
-        glMatrix.mat4.multiply(mvp, mvp, vm);
         
         if (obj.role === "plane"){
             updateHelicopter(mvp, angle1);
@@ -296,13 +325,13 @@ function createShadowFrameBuffer(gl, width, height) {
 
     // Check for errors and report appropriate error messages
     function _errors(buffer, buffer_name) {
-      let error_name = gl.getError();
-      if (!buffer || error_name !== gl.NO_ERROR) {
+      let error_name = state.gl.getError();
+      if (!buffer || error_name !==state.gl.NO_ERROR) {
         window.console.log("Error in _createFrameBufferObject,", buffer_name, "failed; ", error_name);
 
         // Reclaim any buffers that have already been allocated
-        gl.deleteTexture(color_buffer);
-        gl.deleteFramebuffer(frame_buffer);
+       state.gl.deleteTexture(color_buffer);
+       state.gl.deleteFramebuffer(frame_buffer);
 
         return true;
       }
@@ -310,51 +339,52 @@ function createShadowFrameBuffer(gl, width, height) {
     }
 
     // Step 1: Create a frame buffer object
-    frame_buffer = gl.createFramebuffer();
+    frame_buffer =state.gl.createFramebuffer();
     if (_errors(frame_buffer, "frame buffer")) { return null; }
 
     // Step 2: Create and initialize a texture buffer to hold the colors.
-    color_buffer = gl.createTexture();
+    color_buffer =state.gl.createTexture();
     if (_errors(color_buffer, "color buffer")) { return null; }
-    gl.bindTexture(gl.TEXTURE_2D, color_buffer);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0,
-      gl.RGBA, gl.UNSIGNED_BYTE, null);
+   state.gl.bindTexture(state.gl.TEXTURE_2D, color_buffer);
+   state.gl.texImage2D(state.gl.TEXTURE_2D, 0,state.gl.RGBA, width, height, 0,
+     state.gl.RGBA,state.gl.UNSIGNED_BYTE, null);
     if (_errors(color_buffer, "color buffer allocation")) { return null; }
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_MIN_FILTER,state.gl.LINEAR);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_MAG_FILTER,state.gl.LINEAR);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_WRAP_S,state.gl.CLAMP_TO_EDGE);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_WRAP_T,state.gl.CLAMP_TO_EDGE);
 
     // Step 3: Create and initialize a texture buffer to hold the depth values.
     // Note: the WEBGL_depth_texture extension is required for this to work
-    //       and for the gl.DEPTH_COMPONENT texture format to be supported.
-    depth_buffer = gl.createTexture();
+    //       and for thestate.gl.DEPTH_COMPONENT texture format to be supported.
+    var ext = gl.getExtension('WEBGL_depth_texture');
+    depth_buffer =state.gl.createTexture();
     if (_errors(depth_buffer, "depth buffer")) { return null; }
-    gl.bindTexture(gl.TEXTURE_2D, depth_buffer);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0,
-      gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+   state.gl.bindTexture(state.gl.TEXTURE_2D, depth_buffer);
+   state.gl.texImage2D(state.gl.TEXTURE_2D, 0,state.gl.DEPTH_COMPONENT, width, height, 0,
+     state.gl.DEPTH_COMPONENT,state.gl.UNSIGNED_INT, null);
     if (_errors(depth_buffer, "depth buffer allocation")) { return null; }
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_MIN_FILTER,state.gl.LINEAR);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_MAG_FILTER,state.gl.LINEAR);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_WRAP_S,state.gl.CLAMP_TO_EDGE);
+   state.gl.texParameteri(state.gl.TEXTURE_2D,state.gl.TEXTURE_WRAP_T,state.gl.CLAMP_TO_EDGE);
 
     // Step 4: Attach the specific buffers to the frame buffer.
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frame_buffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, color_buffer, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth_buffer, 0);
+   state.gl.bindFramebuffer(state.gl.FRAMEBUFFER, frame_buffer);
+   state.gl.framebufferTexture2D(state.gl.FRAMEBUFFER,state.gl.COLOR_ATTACHMENT0,state.gl.TEXTURE_2D, color_buffer, 0);
+   state.gl.framebufferTexture2D(state.gl.FRAMEBUFFER,state.gl.DEPTH_ATTACHMENT,state.gl.TEXTURE_2D, depth_buffer, 0);
     if (_errors(frame_buffer, "frame buffer")) { return null; }
 
     // Step 5: Verify that the frame buffer is valid.
-    status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-    if (status !== gl.FRAMEBUFFER_COMPLETE) {
+    status =state.gl.checkFramebufferStatus(state.gl.FRAMEBUFFER);
+    if (status !==state.gl.FRAMEBUFFER_COMPLETE) {
       _errors(frame_buffer, "frame buffer status:" + status.toString());
     }
 
     // Unbind these new objects, which makes the default frame buffer the 
     // target for rendering.
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+   state.gl.bindTexture(state.gl.TEXTURE_2D, null);
+   state.gl.bindFramebuffer(state.gl.FRAMEBUFFER, null);
 
     // Remember key properties of the frame buffer object so they can be
     // used later.
