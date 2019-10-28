@@ -13,7 +13,8 @@ var state = {
     time: 0.0,
     curvePos: 0.0,
     speed:1000,
-    spawn: false
+    spawn: false,
+    frameBuffer: null
 };
 
 var sliderSpeed = document.getElementById('speed');
@@ -38,6 +39,7 @@ function main() {
     initState();
     var date = new Date();
     state.time = date.getTime();
+    state.frameBuffer = createShadowFrameBuffer();
     draw(0.0);
     if (state.animate) {
         animate();
@@ -46,8 +48,11 @@ function main() {
 
 function initShaders() {
     var vertexShader = glUtils.getShader(state.gl, state.gl.VERTEX_SHADER, glUtils.SL.Shaders.v1.vertex),
-      fragmentShader = glUtils.getShader(state.gl, state.gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v1.fragment);
+        fragmentShader = glUtils.getShader(state.gl, state.gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v1.fragment);
     state.program = glUtils.createProgram(state.gl, vertexShader, fragmentShader);
+    var shadowVertex = glUtils.getShader(state.gl, state.gl.VERTEX_SHADER, glUtils.SL.Shaders.v2.vertex),
+        ShadowFragment = glUtils.getShader(state.gl, state.gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v2.fragment);
+    state.shadowProgram = glUtils.createProgram(state.gl, shadowVertex, ShadowFragment);
 }
 
 function initGL() {
@@ -99,7 +104,13 @@ function draw(time) {
     var uMovingLight = state.gl.getUniformLocation(state.program, 'uLightPosition2');
     var uAmbientLight = state.gl.getUniformLocation(state.program, 'uAmbientLight');
     var uSampler = state.gl.getUniformLocation(state.program, 'uSampler');
+    var uShadowSampler = state.gl.getUniformLocation(state.program, 'uShadowSampler');
     var uModelMatrix = state.gl.getUniformLocation(state.program, 'uModelMatrix');
+    var shadowMapTransform = state.gl.getUniformLocation(state.program, 'uShadowMapTransformMatrix');
+
+    //var shadowMapTransform = state.gl.getUniformLocation(state.shadowProgram, 'uShadowMapTransformMatrix');
+    var uMVPMatrix = state.gl.getUniformLocation(state.shadowProgram, 'uMVPMatrix');
+
     var vm = state.vm;
     var pm = state.pm;
     var mvp = state.mvp;
@@ -116,30 +127,34 @@ function draw(time) {
     state.gl.uniform3f(uLightColor, 1.2, 1.2, 0.0);
     // Set the ambient light
     state.gl.uniform3f(uAmbientLight, 0.2, 0.2, 0.2);
+    state.gl.uniform3f(shadowMapTransform, false, glMatrix.mat4.create());
     var tick = time/state.speed
     state.curvePos += tick;
     
     if (state.curvePos > 1){
         state.spawn = true;
         state.curvePos = 0;
-    }    
+    }  
+    var angleLight = performance.now() / state.speed / 6 * 2 * Math.PI;
+    var angleSun = performance.now() / (state.speed * 2) / 6 * 2 * Math.PI;
+    renderShadow(uMVPMatrix, pm, angleLight, angleSun);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER,  null);
     
     // Loop through each object and draw!
     state.objects.forEach(function(obj) {
-        if (obj.objType === "Curve" && (obj.bezier.toString() !== state.curve.toString())){
-            obj.bezier = state.curve;
-            obj.updateCurve();
-        }
         state.program.renderBuffers(obj);
 
         glMatrix.mat4.copy(mvp, pm);
         glMatrix.mat4.multiply(mvp, mvp, vm);
         
         if (obj.role === "plane"){
-            updateHelicopter(mvp, uMovingLight);
+            updateHelicopter(mvp, angleLight);
+            state.gl.uniform3f(uMovingLight, Math.cos(angleLight)*3.5, 0, Math.sin(angleLight)*3.5);//move light
         }
         else if(obj.role === "sun"){
-            updateSun(mvp, uSunLightPosition);
+            updateSun(mvp, angleSun);
+            state.gl.uniform3f(uSunLightPosition, Math.cos(angleSun)*8, 0, Math.sin(angleSun)*8);//move sun
         }
         else if (obj.role === "mars"){
             updatePlanet(mvp);
@@ -164,16 +179,18 @@ function draw(time) {
         state.gl.bindTexture(state.gl.TEXTURE_2D, obj.texture);
         state.gl.uniform1i(uSampler, 0);
 
+        
+            state.gl.activeTexture(state.gl.TEXTURE1);
+            state.gl.bindTexture(state.gl.TEXTURE_2D, state.frameBuffer);
+            state.gl.uniform1i(uShadowSampler, 1);
+        
+
         obj.draw(state.gl);
     });
 }
 
-function updateHelicopter(mvp, uMovingLight){
-    var pos = state.curve.get(state.curvePos);
-    var dv = state.curve.derivative(state.curvePos);
+function updateHelicopter(mvp, angle){
     var lookAt = glMatrix.mat4.create();
-
-    var angle = performance.now() / state.speed / 6 * 2 * Math.PI;
 
     glMatrix.mat4.targetTo(lookAt,
         //glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
@@ -183,12 +200,11 @@ function updateHelicopter(mvp, uMovingLight){
         glMatrix.vec3.fromValues(0,1,0)
     );
     glMatrix.mat4.mul(mvp,mvp,lookAt);
-    state.gl.uniform3f(uMovingLight, Math.cos(angle)*3.5, 0, Math.sin(angle)*3.5);//move light
+    
 }
 
-function updateSun(mvp, uSunLightPosition){
+function updateSun(mvp, angle){
     var lookAt = glMatrix.mat4.create();
-    var angle = performance.now() / (state.speed * 2) / 6 * 2 * Math.PI;
 
     glMatrix.mat4.targetTo(lookAt,
         //glMatrix.vec3.fromValues(pos.x, pos.y, pos.z),
@@ -198,7 +214,7 @@ function updateSun(mvp, uSunLightPosition){
         glMatrix.vec3.fromValues(0,1,0)
     );
     glMatrix.mat4.mul(mvp,mvp,lookAt);
-    state.gl.uniform3f(uSunLightPosition, Math.cos(angle)*8, 0, Math.sin(angle)*8);//move sun
+    
 }
 
 function updatePlanet(mvp){
@@ -237,3 +253,114 @@ function spawnBuilding(){
     hasLight
     state.objects.push(new Cube(0.5,state.gl, pos, hasLight));
 }
+
+function renderShadow(uMVPMatrix, pm, angle1, angle2){
+    var mvp = state.shadowMvp;
+    var vm = state.shadowVm;
+    glMatrix.mat4.lookAt(vm,
+        glMatrix.vec3.fromValues(Math.cos(angle2)*6.5, 0, Math.sin(angle2)*6.5),
+        glMatrix.vec3.fromValues(0.5,0,0),
+        glMatrix.vec3.fromValues(0,1,0)
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER,  state.frameBuffer);
+    state.objects.forEach(function(obj) {
+        state.shadowProgram.renderBuffers(obj);
+
+        glMatrix.mat4.copy(mvp, pm);
+        glMatrix.mat4.multiply(mvp, mvp, vm);
+        
+        if (obj.role === "plane"){
+            updateHelicopter(mvp, angle1);
+        }
+        else if(obj.role === "sun"){
+            updateSun(mvp, angle2);
+        }
+        else if (obj.role === "mars"){
+            updatePlanet(mvp);
+        }
+        else{
+            //updateLanding(mvp, obj, uStaticLight);
+        }
+
+        obj.calculateMatrix(mvp);
+
+        glMatrix.mat4.multiply(mvp, mvp, obj.state.mm);
+        state.gl.uniformMatrix4fv(uMVPMatrix, false, mvp);
+        
+        obj.draw(state.gl);
+    });
+}
+
+function createShadowFrameBuffer(gl, width, height) {
+    let frame_buffer, color_buffer, depth_buffer, status;
+
+    // Check for errors and report appropriate error messages
+    function _errors(buffer, buffer_name) {
+      let error_name = gl.getError();
+      if (!buffer || error_name !== gl.NO_ERROR) {
+        window.console.log("Error in _createFrameBufferObject,", buffer_name, "failed; ", error_name);
+
+        // Reclaim any buffers that have already been allocated
+        gl.deleteTexture(color_buffer);
+        gl.deleteFramebuffer(frame_buffer);
+
+        return true;
+      }
+      return false;
+    }
+
+    // Step 1: Create a frame buffer object
+    frame_buffer = gl.createFramebuffer();
+    if (_errors(frame_buffer, "frame buffer")) { return null; }
+
+    // Step 2: Create and initialize a texture buffer to hold the colors.
+    color_buffer = gl.createTexture();
+    if (_errors(color_buffer, "color buffer")) { return null; }
+    gl.bindTexture(gl.TEXTURE_2D, color_buffer);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0,
+      gl.RGBA, gl.UNSIGNED_BYTE, null);
+    if (_errors(color_buffer, "color buffer allocation")) { return null; }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Step 3: Create and initialize a texture buffer to hold the depth values.
+    // Note: the WEBGL_depth_texture extension is required for this to work
+    //       and for the gl.DEPTH_COMPONENT texture format to be supported.
+    depth_buffer = gl.createTexture();
+    if (_errors(depth_buffer, "depth buffer")) { return null; }
+    gl.bindTexture(gl.TEXTURE_2D, depth_buffer);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0,
+      gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+    if (_errors(depth_buffer, "depth buffer allocation")) { return null; }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Step 4: Attach the specific buffers to the frame buffer.
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frame_buffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, color_buffer, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth_buffer, 0);
+    if (_errors(frame_buffer, "frame buffer")) { return null; }
+
+    // Step 5: Verify that the frame buffer is valid.
+    status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (status !== gl.FRAMEBUFFER_COMPLETE) {
+      _errors(frame_buffer, "frame buffer status:" + status.toString());
+    }
+
+    // Unbind these new objects, which makes the default frame buffer the 
+    // target for rendering.
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Remember key properties of the frame buffer object so they can be
+    // used later.
+    frame_buffer.color_buffer = color_buffer;
+    frame_buffer.depth_buffer = depth_buffer;
+    frame_buffer.width = width;
+    frame_buffer.height = height;
+    return frame_buffer;
+  }

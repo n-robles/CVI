@@ -8,6 +8,8 @@ uniform mat4 uNormalMatrix;
 varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec2 vTexCoord;
+varying vec4 vVertexRelativeToLight;
+uniform mat4 uShadowMapTransformMatrix;
 //varying vec4 vColor;
 
 void main() {
@@ -16,4 +18,5 @@ void main() {
   vPosition = vec3(uModelMatrix * aPosition);
   vNormal = normalize(vec3(uNormalMatrix * aNormal));
   vTexCoord = aTexCoord;
+  vVertexRelativeToLight = uShadowMapTransformMatrix * uMVPMatrix * aPosition;
 }
